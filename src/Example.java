@@ -4,7 +4,7 @@ import java.util.HashMap;
 public class Example {
 
 	public static void main(String[] args) throws Exception {
-		BtagAPI btag = new BtagAPI("107832269954b6fa0150617", "8c3a0ef2001c971537af59d5e42ee1e3");
+		BtagAPI btag = new BtagAPI("Your AuthID", "Your Access Key");
 		HashMap<String, Object> params = new HashMap<String, Object>();
 		
 		// build parameters to map
