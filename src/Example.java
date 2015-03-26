@@ -13,7 +13,7 @@ public class Example {
 		params.put("end", "2015-01-30");
 		params.put("isOpened", true);
 		
-		String result = btag.send("tags", params);
+		String result = btag.request("tags", params);
 		
 		System.out.println(result);
 	}

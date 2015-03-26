@@ -62,7 +62,7 @@ public class BtagAPI {
 	 * @return 
 	 * @throws Exception 
 	 */
-	public String send(String endpoint, Map<String, Object> params) throws Exception {
+	public String request(String endpoint, Map<String, Object> params) throws Exception {
 		this.checkData(params);
 		
 		String data_string = this.buildDatastring(params);
