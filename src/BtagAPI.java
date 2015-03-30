@@ -1,3 +1,13 @@
+/**
+ * Bananatag Public API Java Library
+ *
+ * @author Bananatag Systems <eric@bananatag.com>
+ * @version 0.0.1
+ * @license MIT
+ *
+ * @module bananatag-api
+ */
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
