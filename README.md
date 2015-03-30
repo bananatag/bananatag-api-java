@@ -5,10 +5,13 @@ Java Library for the Bananatag API
 
 #### Get All Opened Tags in Date-Range
 ```java
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import org.json.simple.JSONObject;
+
 BtagAPI btag = new BtagAPI("Your AuthID", "Your Access Key");
 HashMap<String, Object> params = new HashMap<String, Object>();
 JSONObject result = new JSONObject();
-
 
 // build parameters to map
 params.put("rtn", "json");
@@ -26,6 +29,10 @@ do {
 
 #### Get Aggregate Stats Over Date-Range
 ```java
+import java.util.HashMap;
+import java.util.concurrent.TimeUnit;
+import org.json.simple.JSONObject;
+
 BtagAPI btag = new BtagAPI("Your AuthID", "Your Access Key");
 HashMap<String, Object> params = new HashMap<String, Object>();
 JSONObject result = new JSONObject();
