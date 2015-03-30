@@ -61,17 +61,9 @@ public class BtagAPI {
 	private String nextUrl;
 	
 	/**
-	 * 
-	 */
-	private long total;
-	
-	/**
-	 * 
-	 */
-	private long cursor;
-	
-	/**
-	 * 
+	 * Flag to indicate if its the same request as the last
+	 * @type boolean
+	 * @access private
 	 */
 	private boolean useNext;
 	
@@ -93,16 +85,14 @@ public class BtagAPI {
 		this.currentMap = new HashMap<String, Object>();
 		this.currentEndpoint = "";
 		this.nextUrl = "";
-		this.total = 0;
-		this.cursor = 0;
 		this.useNext = false;
 	}
 	
 	/**
-	 * 
+	 * Make API request and get JSON object back
 	 * @param endpoint
 	 * @param params
-	 * @return 
+	 * @return JSONObject
 	 * @throws Exception 
 	 */
 	public JSONObject request(String endpoint, Map<String, Object> params) throws Exception {
@@ -137,14 +127,12 @@ public class BtagAPI {
 		try {
 			JSONObject json = (JSONObject) new JSONParser().parse(result);
 			JSONObject paging = (JSONObject) json.get("paging");
-			JSONObject cursorObj = (JSONObject) paging.get("cursors");
-					
+			
 			this.nextUrl = (String) paging.get("nextURL");
-			this.total = (long) cursorObj.get("total");
-			this.cursor = (long) cursorObj.get("next");
 					
 			return json;
 		} catch (Exception e) {
+			// no data was found, reached the end of the result set.
 			return (JSONObject) new JSONParser().parse("{}");
 		}
 		
@@ -155,6 +143,14 @@ public class BtagAPI {
 		return this.sendGet(authorization_header, endpoint, data_string);
 	}
 	
+	/**
+	 * Make GET Request
+	 * @param authorization_header
+	 * @param endpoint
+	 * @param data_string
+	 * @return String
+	 * @throws Exception 
+	 */
 	private String sendGet(String authorization_header, String endpoint, String data_string) throws Exception {
 		String inputLine;
 		StringBuffer response = new StringBuffer();
@@ -183,8 +179,9 @@ public class BtagAPI {
 	}
 	
 	/**
-	 * 
+	 * Validate provided request parameters
 	 * @param params
+	 * @return void
 	 * @throws IOException 
 	 */
 	private void checkData(Map<String, Object> params) throws IOException {
@@ -197,6 +194,12 @@ public class BtagAPI {
 		}
 	}
 	
+	/**
+	 * Validate dates
+	 * @param dateToValidate
+	 * @return boolean
+	 * @throws IOException
+	 */
 	private boolean validateDate(String dateToValidate) throws IOException { 
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-mm-dd");
 		sdf.setLenient(false);
@@ -212,10 +215,11 @@ public class BtagAPI {
 	}
 	
 	/**
-	 * 
-	 * @param params
-	 * @return
-	 */	
+	 * Generate authorization signature using provided data string.
+	 * @param data_string
+	 * @return String
+	 * @throws java.security.SignatureException
+	 */
 	private String generateSignature(String data_string) throws java.security.SignatureException {
 		try {
 			SecretKeySpec signingKey = new SecretKeySpec(this.access_key.getBytes(), "HmacSHA1");	
@@ -231,9 +235,9 @@ public class BtagAPI {
 	}
 	
 	/**
-	 * 
+	 * Build date string from provided parameters
 	 * @param params
-	 * @return
+	 * @return String
 	 */
 	private String buildDatastring(Map<String, Object> params) {
 		String data_string = "";
