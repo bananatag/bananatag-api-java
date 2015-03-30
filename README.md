@@ -14,9 +14,12 @@ params.put("start", "2015-01-01");
 params.put("end", "2015-01-30");
 params.put("isOpened", true);
 
-String result = btag.send("tags", params);
+do {
+	result = btag.request("tags", params);
+	System.out.println(result);
+	TimeUnit.SECONDS.sleep(1);
+} while (!result.isEmpty());
 
-System.out.println(result);
 ```
 
 #### Get Aggregate Stats Over Date-Range
@@ -30,9 +33,11 @@ params.put("start", "2015-01-01");
 params.put("end", "2015-01-30");
 params.put("aggregateData", true);
 
-String result = btag.send("stats", params);
-
-System.out.println(result);
+do {
+	result = btag.request("tags", params);
+	System.out.println(result);
+	TimeUnit.SECONDS.sleep(1);
+} while (!result.isEmpty());
 ```
 
 ### License
