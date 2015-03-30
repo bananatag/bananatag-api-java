@@ -34,7 +34,7 @@ params.put("end", "2015-01-30");
 params.put("aggregateData", true);
 
 do {
-	result = btag.request("tags", params);
+	result = btag.request("stats", params);
 	System.out.println(result);
 	TimeUnit.SECONDS.sleep(1);
 } while (!result.isEmpty());
