@@ -7,6 +7,8 @@ Java Library for the Bananatag API
 ```java
 BtagAPI btag = new BtagAPI("Your AuthID", "Your Access Key");
 HashMap<String, Object> params = new HashMap<String, Object>();
+JSONObject result = new JSONObject();
+
 
 // build parameters to map
 params.put("rtn", "json");
@@ -26,6 +28,8 @@ do {
 ```java
 BtagAPI btag = new BtagAPI("Your AuthID", "Your Access Key");
 HashMap<String, Object> params = new HashMap<String, Object>();
+JSONObject result = new JSONObject();
+
 
 // build parameters to map
 params.put("rtn", "json");
