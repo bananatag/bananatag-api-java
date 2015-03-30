@@ -37,7 +37,6 @@ BtagAPI btag = new BtagAPI("Your AuthID", "Your Access Key");
 HashMap<String, Object> params = new HashMap<String, Object>();
 JSONObject result = new JSONObject();
 
-
 // build parameters to map
 params.put("rtn", "json");
 params.put("start", "2015-01-01");
