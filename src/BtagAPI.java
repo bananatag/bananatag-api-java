@@ -1,13 +1,3 @@
-/**
- * Bananatag Public API Java Library
- *
- * @author Bananatag Systems <eric@bananatag.com>
- * @version 0.0.1
- * @license MIT
- *
- * @module bananatag-api
- */
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -136,8 +126,7 @@ public class BtagAPI {
 		
 		try {
 			JSONObject json = (JSONObject) new JSONParser().parse(result);
-			JSONObject paging = (JSONObject) json.get("paging");
-			
+			JSONObject paging = (JSONObject) json.get("paging");					
 			this.nextUrl = (String) paging.get("nextURL");
 					
 			return json;
