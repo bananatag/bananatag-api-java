@@ -1,14 +1,8 @@
-/**
- * Bananatag Public API Java Library
- *
- * @author Bananatag Systems <eric@bananatag.com>
- * @version v0.1
- * @license MIT
- *
- * @module bananatag-api
- */
-
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
@@ -16,15 +10,29 @@ import java.net.URL;
 import java.security.SignatureException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
+import javax.activation.DataHandler;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
+import javax.mail.Address;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeBodyPart;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeMultipart;
+import javax.mail.util.ByteArrayDataSource;
 
 public class BtagAPI {
 
@@ -91,7 +99,7 @@ public class BtagAPI {
 		
 		this.auth_id = id;
 		this.access_key = key;
-		this.base_url = "https://api.bananatag.com/";
+		this.base_url = "http://ec2-52-11-177-28.us-west-2.compute.amazonaws.com:8080/";//"https://api.bananatag.com/";
 		this.currentMap = new HashMap<String, Object>();
 		this.currentEndpoint = "";
 		this.nextUrl = "";
@@ -144,12 +152,153 @@ public class BtagAPI {
 			// no data was found, reached the end of the result set.
 			return (JSONObject) new JSONParser().parse("{}");
 		}
-		
 	}
 	
+	/**
+	 * 
+	 * @return
+	 * @throws IOException 
+	 * @throws MessagingException 
+	 */
+	@SuppressWarnings({ "unchecked", "unchecked" })
+	public String buildMessage(Map<String, Object> params) throws IOException, MessagingException {
+		boolean hasAttachments = false;
+				
+		if (!params.containsKey("from")) {
+			throw new IOException("You must include the 'from' parameter for each attachment.");
+		}
+		
+		if (!params.containsKey("to")) {
+			throw new IOException("You must include the 'to' parameter for each attachment.");
+		}
+		
+		if (!params.containsKey("html")) {
+			throw new IOException("You must include the 'html' parameter for each attachment.");
+		}
+		
+		// if there are attachments
+		if (params.containsKey("attachments")) {
+			// check if attachments were passed as a list
+			if (!(params.get("attachments") instanceof ArrayList)) {
+				throw new IOException("The attachments parameter must be an ArrayList of 'HashMap<String, String>' objects.");
+			} else {
+				hasAttachments = true;
+			}
+		}
+		
+		Properties props = new Properties();
+		Session mailConnection = Session.getInstance(props, null);
+		MimeMessage message = new MimeMessage(mailConnection);
+				
+		// add recipients to message
+		String[] to = (String[]) params.get("to");
+		for (int i = 0; i < to.length; i++) {
+			message.addRecipient(Message.RecipientType.TO, new InternetAddress((String) to[i]));
+		}
+		
+		// add from address to message
+		Address from = new InternetAddress((String) params.get("from"));
+		message.setFrom(from);
+		
+		// create the message body part 
+	    MimeBodyPart messageBodyPart = new MimeBodyPart();
+	    messageBodyPart.setContent(message, "text/html");
+	    messageBodyPart.setText((String) params.get("html"), "utf8", "html");
+	    messageBodyPart.setHeader("Content-Transfer-Encoding", "base64");
+	    Multipart multipart = new MimeMultipart("mixed");
+	    multipart.addBodyPart(messageBodyPart);
+		
+	    // add subject if provided
+		if (params.containsKey("subject")) {
+			message.setSubject((String) params.get("subject"));
+		}
+		
+		// add any cc if provided
+		if (params.containsKey("cc")) {
+			String[] cc = (String[]) params.get("cc");
+			
+			for (int j = 0; j < cc.length; j++) {
+				message.addRecipient(Message.RecipientType.CC, new InternetAddress((String) cc[j]));
+			}			
+		}
+		
+		// add any bcc if provided
+		if (params.containsKey("bcc")) {
+			String[] bcc = (String[]) params.get("bcc");
+			
+			for (int k = 0; k < bcc.length; k++) {
+				message.addRecipient(Message.RecipientType.BCC, new InternetAddress((String) bcc[k]));
+			}			
+		}
+		
+		// add all custom headers if any are provided
+		if (params.containsKey("headers")) {
+			HashMap<String, String> headers = (HashMap<String, String>) params.get("headers");
+			for (Map.Entry<String, String> header : headers.entrySet()) 
+			{ 
+				message.addHeader(header.getKey(), header.getValue());
+			}
+		}
+		
+		if (hasAttachments) {			
+			ArrayList<HashMap<String, String>> attachments = (ArrayList<HashMap<String, String>>) params.get("attachments");
+			for (HashMap<String, String> attachment: attachments) {
+				
+				messageBodyPart = new MimeBodyPart();
+			   			    			    
+			    if (!attachment.containsKey("disposition")) {
+			    	throw new IOException("You must specify a disposition (attachment or inline) for each attachment.");
+			    }
+			    
+			    File attachedFile = new File(attachment.get("filepath"));
+			    messageBodyPart.setDataHandler(new DataHandler(new ByteArrayDataSource(new FileInputStream(attachedFile), "application/octet-stream")));
+			    
+			    if (attachment.get("disposition") == "inline") {
+				    if (!attachment.containsKey("contentID")) {
+				    	throw new IOException("You must provide a value for the 'contentID' parameter for inline attachments.");
+				    }
+			    	
+				    messageBodyPart.setContentID("<" + attachment.get("contentID") + ">");
+			    	messageBodyPart.setDisposition(MimeBodyPart.INLINE);
+			    } else {
+				    if (attachment.containsKey("contentID")) {
+				    	messageBodyPart.setContentID("<" + attachment.get("contentID") + ">");
+				    }
+			    	
+			    	messageBodyPart.setDisposition(MimeBodyPart.ATTACHMENT);
+			    }
+			   
+			    messageBodyPart.setFileName(attachedFile.getName());
+			    multipart.addBodyPart(messageBodyPart);	
+			}
+		}
+		
+	    // Put parts in message
+	    message.setContent(multipart);
+	    
+	    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+	    message.writeTo(byteArrayOutputStream);
+	    
+	    return Base64.getEncoder().encodeToString(byteArrayOutputStream.toByteArray());	    
+	}
+	
+	/**
+	 * 
+	 * @param endpoint
+	 * @param sig
+	 * @param data_string
+	 * @return
+	 * @throws Exception
+	 */
 	private String makeRequest(String endpoint, String sig, String data_string) throws Exception {
+		String method = getMethod(endpoint);
 		String authorization_header = Base64.getEncoder().encodeToString((this.auth_id + ":" + sig).getBytes());
-		return this.sendGet(authorization_header, endpoint, data_string);
+		
+		if (method == "POST") {
+			return this.sendPost(authorization_header, endpoint, data_string);			
+		} else {
+			return this.sendGet(authorization_header, endpoint, data_string);
+		}
 	}
 	
 	/**
@@ -184,6 +333,43 @@ public class BtagAPI {
 		
 		in.close();
  		
+		return response.toString();
+	}
+	
+	/**
+	 * 
+	 * @param authorization_header
+	 * @param endpoint
+	 * @param data_string
+	 * @return
+	 * @throws Exception
+	 */
+	private String sendPost(String authorization_header, String endpoint, String data_string) throws Exception { 
+		String inputLine;
+		StringBuffer response = new StringBuffer();
+		URL obj = new URL(this.base_url + endpoint);
+		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		 
+		con.setRequestMethod("POST");
+		con.setRequestProperty("authorization", authorization_header);
+		con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
+ 
+		String urlParameters = data_string;
+ 
+		con.setDoOutput(true);
+		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+		wr.writeBytes(urlParameters);
+		wr.flush();
+		wr.close();
+  
+		BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+ 
+		while ((inputLine = in.readLine()) != null) {
+			response.append(inputLine);
+		}
+		
+		in.close();
+ 
 		return response.toString();
 	}
 	
@@ -266,5 +452,17 @@ public class BtagAPI {
 		}
 				
 		return data_string;
-	}	
+	}
+	
+	/**
+	 * 
+	 * @param endpoint
+	 * @return
+	 */
+	private String getMethod(String endpoint) {
+		switch(endpoint) {
+		case "tags/send": return "POST";
+		default: return "GET";
+		}
+	}
 }
