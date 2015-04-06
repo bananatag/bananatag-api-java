@@ -99,7 +99,7 @@ public class BtagAPI {
 		
 		this.auth_id = id;
 		this.access_key = key;
-		this.base_url = "http://ec2-52-11-177-28.us-west-2.compute.amazonaws.com:8080/";//"https://api.bananatag.com/";
+		this.base_url = "https://api.bananatag.com/";
 		this.currentMap = new HashMap<String, Object>();
 		this.currentEndpoint = "";
 		this.nextUrl = "";
@@ -320,7 +320,7 @@ public class BtagAPI {
 			obj = new URL(this.base_url + endpoint + "?" + data_string);	
 		}
 
-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+		HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 		
 		con.setRequestMethod("GET");
 		con.setRequestProperty("authorization", authorization_header);
